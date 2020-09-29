@@ -63,8 +63,8 @@ def policy_evaluation(P, nS, nA, policy, gamma=0.9, tol=1e-3):
             value_function[s] = 0
 
             a = policy[s]
-            probability, nextstate, reward, terminal = P[s][a]
-            value_function[s] += (probability * (reward + gamma * value_function[nextstate]))
+            for probability, nextstate, reward, terminal in P[s][a]:
+                value_function[s] += (probability * (reward + gamma * value_function[nextstate]))
             Delta = max(
                 Delta,
                 abs(value_function[s] - old_v)
@@ -101,12 +101,16 @@ def policy_improvement(P, nS, nA, value_from_policy, policy, gamma=0.9):
         max_a = None
         max_val = -1
         for a in P[s].keys():
-            probability, nextstate, reward, terminal = P[s][a]
-            val = reward + gamma * value_from_policy[nextstate]
+            val = 0
+            for probability, nextstate, reward, terminal in P[s][a]:
+                partial_value = (probability * (reward + gamma * value_from_policy[nextstate]))
+                val += partial_value
             if val > max_val:
                 max_val = val
                 max_a = a
-                
+
+        if max_a is not None:
+            # s is not terminal, since if s is terminal, max_a is None
             new_policy[s] = max_a
     ############################
     return new_policy
@@ -132,6 +136,7 @@ def policy_iteration(P, nS, nA, gamma=0.9, tol=10e-3):
     value_function = np.zeros(nS)
     policy = np.zeros(nS, dtype=int)
 
+    n_iters = 0
     while True:
         value_function = policy_evaluation(P, nS, nA, policy, gamma, tol)
         new_policy = policy_improvement(P, nS, nA, value_function, policy, gamma)
@@ -139,6 +144,8 @@ def policy_iteration(P, nS, nA, gamma=0.9, tol=10e-3):
         if (new_policy == policy).all():
             break
         policy = new_policy
+        n_iters += 1
+    print('policy iteration uses {} iterations'.format(n_iters))
     ############################
     return value_function, policy
 
@@ -165,13 +172,39 @@ def value_iteration(P, nS, nA, gamma=0.9, tol=1e-3):
     policy = np.zeros(nS, dtype=int)
     ############################
     # YOUR IMPLEMENTATION HERE #
+    n_iters = 0
+    while True:
+        # one sweep of policy evaluation
+        Delta = 0
+        for s in range(nS):
 
+            max_a = None
+            max_val = -1
+            for a in P[s].keys():
+                val = 0
+                for probability, nextstate, reward, terminal in P[s][a]:
+                    val += (probability * (reward + gamma * value_function[nextstate]))
+                if val > max_val:
+                    max_val = val
+                    max_a = a
 
+            if max_a is not None:
+                policy[a] = max_a
+                Delta = max(Delta, abs(value_function[s] - max_val))
+                value_function[s] = max_val
+
+        n_iters += 1
+        if Delta <= tol:
+            break
+
+    print('value iteration uses {} iterations'.format(n_iters))
+
+    updated_policy = policy_improvement(P, nS, nA, value_function, policy, gamma)
     ############################
-    return value_function, policy
+    return value_function, updated_policy
 
 def render_single(env, policy, max_steps=100):
-  """
+    """
     This function does not need to be modified
     Renders policy once on environment. Watch your agent play!
 
@@ -182,25 +215,26 @@ def render_single(env, policy, max_steps=100):
       attributes.
     Policy: np.array of shape [env.nS]
       The action to take at a given state
-  """
+    """
 
-  episode_reward = 0
-  ob = env.reset()
-  for t in range(max_steps):
+    episode_reward = 0
+    ob = env.reset()
+    for t in range(max_steps):
         env.render()
         time.sleep(0.25)
         a = policy[ob]
         ob, rew, done, _ = env.step(a)
         episode_reward += rew
         if done:
-                break
-  env.render();
+            break
 
-  if not done:
+    env.render()
+
+    if not done:
         print("The agent didn't reach a terminal state in {} steps.".format(max_steps))
-  else:
-        print("Episode reward: %f" % episode_reward)
-
+    else:
+        print("Episode reward: {} using {} steps".format(episode_reward, t))
+        
 
 # Edit below to run policy and value iteration on different environments and
 # visualize the resulting policies in action!
@@ -208,8 +242,8 @@ def render_single(env, policy, max_steps=100):
 if __name__ == "__main__":
 
     # comment/uncomment these lines to switch between deterministic/stochastic environments
-    env = gym.make("Deterministic-4x4-FrozenLake-v0")
-    # env = gym.make("Stochastic-4x4-FrozenLake-v0")
+    # env = gym.make("Deterministic-4x4-FrozenLake-v0")
+    env = gym.make("Stochastic-4x4-FrozenLake-v0")
 
     print("\n" + "-"*25 + "\nBeginning Policy Iteration\n" + "-"*25)
 
