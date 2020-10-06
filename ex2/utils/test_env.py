@@ -11,6 +11,7 @@ class ActionSpace(object):
 class ObservationSpace(object):
     def __init__(self, shape):
         self.shape = shape
+        # features of each state
         self.state_0 = np.random.randint(0, 50, shape, dtype=np.uint16)
         self.state_1 = np.random.randint(100, 150, shape, dtype=np.uint16)
         self.state_2 = np.random.randint(200, 250, shape, dtype=np.uint16)

@@ -34,7 +34,7 @@ class Linear(DQN):
                     shape = (batch_size)
                 - self.r: batch of rewards, type = float32
                     shape = (batch_size)
-                - self.sp: batch of next states, type = uint8
+n                - self.sp: batch of next states, type = uint8
                     shape = (batch_size, img height, img width, nchannels x config.state_history)
                 - self.done_mask: batch of done, type = bool
                     shape = (batch_size)
@@ -50,8 +50,13 @@ class Linear(DQN):
         ##############################################################
         ################YOUR CODE HERE (6-15 lines) ##################
 
-        pass
-
+        print('state_shape', state_shape)
+        self.s = tf.placeholder(tf.uint8, shape=(None, ) + tuple(state_shape))
+        self.a = tf.placeholder(tf.uint32, shape=(None, ))
+        self.r = tf.placeholder(tf.float32, shape=(None, ))
+        self.sp = tf.placeholder(tf.uint8, shape=(None, ) + tuple(state_shape))
+        self.done_mask = tf.placeholder(tf.bool, shape=(None, ))  # termination of episode or not
+        self.lr = tf.placeholder(tf.float32)
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -87,8 +92,9 @@ class Linear(DQN):
         """
         ##############################################################
         ################ YOUR CODE HERE - 2-3 lines ################## 
-        
-        pass
+
+        tf.layers.flatten(state)
+        tf.layers.dense
 
         ##############################################################
         ######################## END YOUR CODE #######################
