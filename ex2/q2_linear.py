@@ -22,7 +22,7 @@ class Linear(DQN):
         """
         # this information might be useful
         state_shape = list(self.env.observation_space.shape)
-
+        print('state_shape', state_shape)
         ##############################################################
         """
         TODO: 
@@ -50,11 +50,11 @@ class Linear(DQN):
         ##############################################################
         ################YOUR CODE HERE (6-15 lines) ##################
 
-
-        self.s = tf.placeholder(tf.uint8, shape=(None, ) + tuple(state_shape))
-        self.a = tf.placeholder(tf.uint32, shape=(None, ))
+        remain_dims = tuple(state_shape[:-1]) + (state_shape[-1] * self.config.state_history, )
+        self.s = tf.placeholder(tf.uint8, shape=(None, ) + remain_dims)
+        self.a = tf.placeholder(tf.int32, shape=(None, ))
         self.r = tf.placeholder(tf.float32, shape=(None, ))
-        self.sp = tf.placeholder(tf.uint8, shape=(None, ) + tuple(state_shape))
+        self.sp = tf.placeholder(tf.uint8, shape=(None, ) + remain_dims)
         self.done_mask = tf.placeholder(tf.bool, shape=(None, ))  # termination of episode or not
         self.lr = tf.placeholder(tf.float32)
         ##############################################################
@@ -139,17 +139,15 @@ class Linear(DQN):
         """
         ##############################################################
         ################### YOUR CODE HERE - 5-10 lines #############
-        vars_q_scope = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=q_scope)
-        vars_target_q_scope = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=target_q_scope)
-        print('vars_target_q_scope', vars_target_q_scope)
-        with tf.variable_scope(target_q_scope, reuse=True):                
-            assign_ops = []
-            for v in vars_q_scope:
-                name_without_scope = '/'.join(v.name.split('/')[1:])
-                print(name_without_scope)
-                assign_ops.append(
-                    tf.assign(tf.get_variable(name_without_scope), v)
-                )
+        vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=q_scope)
+        vars_target = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=target_q_scope)
+
+        vars = sorted(vars, key=lambda v: v.name)
+        vars_target = sorted(vars_target, key=lambda v: v.name)
+
+        assert len(vars) == len(vars_target)
+
+        assign_ops = [tf.assign(vt, v) for v, vt in zip(vars, vars_target)]
         self.update_target_op = tf.group(*assign_ops)
 
         ##############################################################
@@ -189,8 +187,20 @@ class Linear(DQN):
         ##############################################################
         ##################### YOUR CODE HERE - 4-5 lines #############
 
-        pass
+        undone_mask = tf.cast(tf.logical_not(self.done_mask), dtype=tf.float32)
+        Q_samp = (
+            self.r
+            + undone_mask * self.config.gamma * tf.reduce_max(target_q, axis=1)
+        )
 
+        mask = tf.one_hot(
+            self.a,
+            depth=num_actions
+        )
+        Q_s_a = tf.boolean_mask(q, mask)
+        self.loss = tf.reduce_mean(
+            tf.squared_difference(Q_samp, Q_s_a)
+        )
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -225,9 +235,21 @@ class Linear(DQN):
         """
         ##############################################################
         #################### YOUR CODE HERE - 8-12 lines #############
+        opt = tf.train.AdamOptimizer(
+            learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-07
+        )
 
-        pass
-        
+        with tf.variable_scope(scope):
+            variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
+            gvs = opt.compute_gradients(self.loss, variables)
+            # print('grads', grads)
+            if self.config.grad_clip:
+                # https://stackoverflow.com/questions/36498127/how-to-apply-gradient-clipping-in-tensorflow
+                gvs = [(tf.clip_by_norm(grad, self.config.clip_val), var)
+                       for grad, var in gvs]
+
+            self.train_op = opt.apply_gradients(gvs)
+            self.grad_norm = tf.global_norm(gvs)
         ##############################################################
         ######################## END YOUR CODE #######################
     
