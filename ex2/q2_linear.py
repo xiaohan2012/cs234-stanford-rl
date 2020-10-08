@@ -34,7 +34,7 @@ class Linear(DQN):
                     shape = (batch_size)
                 - self.r: batch of rewards, type = float32
                     shape = (batch_size)
-n                - self.sp: batch of next states, type = uint8
+                - self.sp: batch of next states, type = uint8
                     shape = (batch_size, img height, img width, nchannels x config.state_history)
                 - self.done_mask: batch of done, type = bool
                     shape = (batch_size)
@@ -50,7 +50,7 @@ n                - self.sp: batch of next states, type = uint8
         ##############################################################
         ################YOUR CODE HERE (6-15 lines) ##################
 
-        print('state_shape', state_shape)
+
         self.s = tf.placeholder(tf.uint8, shape=(None, ) + tuple(state_shape))
         self.a = tf.placeholder(tf.uint32, shape=(None, ))
         self.r = tf.placeholder(tf.float32, shape=(None, ))
@@ -92,10 +92,12 @@ n                - self.sp: batch of next states, type = uint8
         """
         ##############################################################
         ################ YOUR CODE HERE - 2-3 lines ################## 
-
-        tf.layers.flatten(state)
-        tf.layers.dense
-
+        with tf.variable_scope(scope):
+           out = tf.layers.dense(
+               tf.layers.flatten(state),
+               num_actions, activation=None, use_bias=True,
+               reuse=reuse
+           )
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -124,7 +126,7 @@ n                - self.sp: batch of next states, type = uint8
         """
         TODO: 
             Add an operator self.update_target_op that for each variable in
-            tf.GraphKeys.GLOBAL_VARIABLES that is in q_scope, assigns its
+           tf.GraphKeys.GLOBAL_VARIABLES that is in q_scope, assigns its
             value to the corresponding variable in target_q_scope
 
         HINT: 
@@ -137,8 +139,18 @@ n                - self.sp: batch of next states, type = uint8
         """
         ##############################################################
         ################### YOUR CODE HERE - 5-10 lines #############
-        
-        pass
+        vars_q_scope = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=q_scope)
+        vars_target_q_scope = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=target_q_scope)
+        print('vars_target_q_scope', vars_target_q_scope)
+        with tf.variable_scope(target_q_scope, reuse=True):                
+            assign_ops = []
+            for v in vars_q_scope:
+                name_without_scope = '/'.join(v.name.split('/')[1:])
+                print(name_without_scope)
+                assign_ops.append(
+                    tf.assign(tf.get_variable(name_without_scope), v)
+                )
+        self.update_target_op = tf.group(*assign_ops)
 
         ##############################################################
         ######################## END YOUR CODE #######################
