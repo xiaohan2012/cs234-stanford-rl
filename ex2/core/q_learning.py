@@ -172,7 +172,10 @@ class QN(object):
                 t += 1
                 last_eval += 1
                 last_record += 1
-                if self.config.render_train: self.env.render()
+
+                if self.config.render_train:
+                    self.env.render()
+
                 # replay memory stuff
                 idx      = replay_buffer.store_frame(state)
                 q_input = replay_buffer.encode_recent_observation()
@@ -202,14 +205,19 @@ class QN(object):
                     exp_schedule.update(t)
                     lr_schedule.update(t)
                     if len(rewards) > 0:
-                        prog.update(t + 1, exact=[("Loss", loss_eval), ("Avg_R", self.avg_reward), 
-                                        ("Max_R", np.max(rewards)), ("eps", exp_schedule.epsilon), 
-                                        ("Grads", grad_eval), ("Max_Q", self.max_q), 
-                                        ("lr", lr_schedule.epsilon)])
+                        prog.update(
+                            t + 1,
+                            exact=[("Loss", loss_eval), ("Avg_R", self.avg_reward),
+                                   ("Max_R", np.max(rewards)), ("eps", exp_schedule.epsilon),
+                                   ("Grads", grad_eval), ("Max_Q", self.max_q),
+                                   ("lr", lr_schedule.epsilon)]
+                        )
 
                 elif (t < self.config.learning_start) and (t % self.config.log_freq == 0):
-                    sys.stdout.write("\rPopulating the memory {}/{}...".format(t, 
-                                                        self.config.learning_start))
+                    sys.stdout.write("\rPopulating the memory {}/{}...".format(
+                        t,
+                        self.config.learning_start)
+                    )
                     sys.stdout.flush()
 
                 # count reward
@@ -218,7 +226,7 @@ class QN(object):
                     break
 
             # updates to perform at the end of an episode
-            rewards.append(total_reward)          
+            rewards.append(total_reward)
 
             if (t > self.config.learning_start) and (last_eval > self.config.eval_freq):
                 # evaluate our policy
@@ -263,7 +271,6 @@ class QN(object):
 
         return loss_eval, grad_eval
 
-
     def evaluate(self, env=None, num_episodes=None):
         """
         Evaluation with same procedure as the training
@@ -287,7 +294,8 @@ class QN(object):
             total_reward = 0
             state = env.reset()
             while True:
-                if self.config.render_test: env.render()
+                if self.config.render_test:
+                    env.render()
 
                 # store last state in buffer
                 idx     = replay_buffer.store_frame(state)
@@ -319,7 +327,6 @@ class QN(object):
 
         return avg_reward
 
-
     def record(self):
         """
         Re create an env and record a video for one episode
@@ -328,7 +335,7 @@ class QN(object):
         env = gym.wrappers.Monitor(env, self.config.record_path, video_callable=lambda x: True, resume=True)
         env = MaxAndSkipEnv(env, skip=self.config.skip_frame)
         env = PreproWrapper(env, prepro=greyscale, shape=(80, 80, 1), 
-                        overwrite_render=self.config.overwrite_render)
+                            overwrite_render=self.config.overwrite_render)
         self.evaluate(env, 1)
 
 

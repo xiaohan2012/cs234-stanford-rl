@@ -187,17 +187,20 @@ class Linear(DQN):
         ##############################################################
         ##################### YOUR CODE HERE - 4-5 lines #############
 
+        # get q value from target_q
         undone_mask = tf.cast(tf.logical_not(self.done_mask), dtype=tf.float32)
         Q_samp = (
             self.r
             + undone_mask * self.config.gamma * tf.reduce_max(target_q, axis=1)
         )
-
+        
+        # get q value from up-to-date estimator
         mask = tf.one_hot(
             self.a,
             depth=num_actions
         )
         Q_s_a = tf.boolean_mask(q, mask)
+
         self.loss = tf.reduce_mean(
             tf.squared_difference(Q_samp, Q_s_a)
         )

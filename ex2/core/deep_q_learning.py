@@ -145,8 +145,10 @@ class DQN(QN):
             
         # logging
         self.merged = tf.summary.merge_all()
-        self.file_writer = tf.summary.FileWriter(self.config.output_path, 
-                                                self.sess.graph)
+        self.file_writer = tf.summary.FileWriter(
+            self.config.output_path,
+            self.sess.graph
+        )
 
 
 
@@ -208,8 +210,11 @@ class DQN(QN):
             self.eval_reward_placeholder: self.eval_reward, 
         }
 
-        loss_eval, grad_norm_eval, summary, _ = self.sess.run([self.loss, self.grad_norm, 
-                                                 self.merged, self.train_op], feed_dict=fd)
+        loss_eval, grad_norm_eval, summary, _ = self.sess.run(
+            [self.loss, self.grad_norm,
+             self.merged, self.train_op],
+            feed_dict=fd
+        )
 
 
         # tensorboard stuff
@@ -223,4 +228,3 @@ class DQN(QN):
         Update parametes of Q' with parameters of Q
         """
         self.sess.run(self.update_target_op)
-
