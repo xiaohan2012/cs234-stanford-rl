@@ -57,7 +57,7 @@ class DQN(QN):
 
         Args:
             state: node of tf graph of shape = (batch_size, height, width, nchannels)
-                    of type tf.uint8.
+all_possible_next_states                    of type tf.uint8.
                     if , values are between 0 and 255 -> 0 and 1
         """
         state = tf.cast(state, tf.float32)
