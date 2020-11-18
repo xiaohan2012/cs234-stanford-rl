@@ -22,7 +22,6 @@ class Linear(DQN):
         """
         # this information might be useful
         state_shape = list(self.env.observation_space.shape)
-        print('state_shape', state_shape)
         ##############################################################
         """
         TODO: 
@@ -34,7 +33,7 @@ class Linear(DQN):
                     shape = (batch_size)
                 - self.r: batch of rewards, type = float32
                     shape = (batch_size)
-                - self.sp: batch of next states, type = uint8
+n                - self.sp: batch of next states, type = uint8
                     shape = (batch_size, img height, img width, nchannels x config.state_history)
                 - self.done_mask: batch of done, type = bool
                     shape = (batch_size)

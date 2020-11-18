@@ -36,3 +36,11 @@ class config():
     eps_end            = 0.01
     eps_nsteps         = nsteps_train/2
     learning_start     = 200
+
+
+    # optimizer
+    opt_lr = 0.001
+    opt_beta_1 = 0.9
+    opt_beta_2 = 0.999
+    opt_epsilon = 1e-07
+    
