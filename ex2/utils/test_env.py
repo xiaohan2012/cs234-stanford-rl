@@ -1,5 +1,7 @@
 import numpy as np
 
+np.random.seed(12345)
+
 class ActionSpace(object):
     def __init__(self, n):
         self.n = n
@@ -17,7 +19,6 @@ class ObservationSpace(object):
         self.state_2 = np.random.randint(200, 250, shape, dtype=np.uint16)
         self.state_3 = np.random.randint(300, 350, shape, dtype=np.uint16)
         self.states = [self.state_0, self.state_1, self.state_2, self.state_3]   
-
 
 class EnvTest(object):
     """

@@ -50,10 +50,10 @@ n                - self.sp: batch of next states, type = uint8
         ################YOUR CODE HERE (6-15 lines) ##################
 
         remain_dims = tuple(state_shape[:-1]) + (state_shape[-1] * self.config.state_history, )
-        self.s = tf.placeholder(tf.uint8, shape=(None, ) + remain_dims)
+        self.s = tf.placeholder(tf.float32, shape=(None, ) + remain_dims)
         self.a = tf.placeholder(tf.int32, shape=(None, ))
         self.r = tf.placeholder(tf.float32, shape=(None, ))
-        self.sp = tf.placeholder(tf.uint8, shape=(None, ) + remain_dims)
+        self.sp = tf.placeholder(tf.float32, shape=(None, ) + remain_dims)
         self.done_mask = tf.placeholder(tf.bool, shape=(None, ))  # termination of episode or not
         self.lr = tf.placeholder(tf.float32)
         ##############################################################
@@ -203,6 +203,8 @@ n                - self.sp: batch of next states, type = uint8
         self.loss = tf.reduce_mean(
             tf.squared_difference(Q_samp, Q_s_a)
         )
+        self.target_q_value = Q_samp
+        self.q_value = Q_s_a
         ##############################################################
         ######################## END YOUR CODE #######################
 
@@ -243,7 +245,8 @@ n                - self.sp: batch of next states, type = uint8
 
         with tf.variable_scope(scope):
             variables = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope=scope)
-            gvs = opt.compute_gradients(self.loss, variables)
+            gvs = opt.compute_gradients(self.loss, variables)  # A list of (gradient, variable) pairs.
+            self.grad = gvs
             # print('grads', grads)
             if self.config.grad_clip:
                 # https://stackoverflow.com/questions/36498127/how-to-apply-gradient-clipping-in-tensorflow
@@ -252,6 +255,7 @@ n                - self.sp: batch of next states, type = uint8
 
             self.train_op = opt.apply_gradients(gvs)
             self.grad_norm = tf.global_norm(gvs)
+
         ##############################################################
         ######################## END YOUR CODE #######################
     

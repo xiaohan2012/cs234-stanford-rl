@@ -106,6 +106,11 @@ all_possible_next_states                    of type tf.uint8.
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
+        self.logger.debug('### initialize all variables to zero')
+        vars = tf.get_collection(tf.GraphKeys.GLOBAL_VARIABLES, scope='q')
+        init_to_zero = tf.group(*[tf.assign(v, np.zeros(v.shape)) for v in vars])
+        self.sess.run(init_to_zero)
+
         # synchronise q and target_q networks
         self.sess.run(self.update_target_op)
 
@@ -190,8 +195,7 @@ all_possible_next_states                    of type tf.uint8.
 
         s_batch, a_batch, r_batch, sp_batch, done_mask_batch = replay_buffer.sample(
             self.config.batch_size)
-
-
+        print('r_batch', r_batch)
         fd = {
             # inputs
             self.s: s_batch,
@@ -210,13 +214,17 @@ all_possible_next_states                    of type tf.uint8.
             self.eval_reward_placeholder: self.eval_reward, 
         }
 
-        loss_eval, grad_norm_eval, summary, _ = self.sess.run(
+        loss_eval, grad_norm_eval, summary, _, grad, target_q, q = self.sess.run(
             [self.loss, self.grad_norm,
-             self.merged, self.train_op],
+             self.merged, self.train_op,
+             self.grad, self.target_q_value, self.q_value],
             feed_dict=fd
         )
+        print('target_q', target_q)
+        print('q', q)
 
-
+        print('loss', loss_eval)
+        # print('W grad', grad[0][0].T)
         # tensorboard stuff
         self.file_writer.add_summary(summary, t)
         

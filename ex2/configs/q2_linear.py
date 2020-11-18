@@ -14,7 +14,7 @@ class config():
 
     # model and training config
     num_episodes_test = 20
-    grad_clip         = True
+    grad_clip         = False
     clip_val          = 10
     saving_freq       = 5000
     log_freq          = 50
@@ -22,8 +22,8 @@ class config():
     soft_epsilon      = 0
 
     # hyper params
-    nsteps_train       = 10000
-    batch_size         = 32
+    nsteps_train       = 4  # 10000
+    batch_size         = 2 # 32
     buffer_size        = 1000
     target_update_freq = 500
     gamma              = 0.99
@@ -35,7 +35,7 @@ class config():
     eps_begin          = 1
     eps_end            = 0.01
     eps_nsteps         = nsteps_train/2
-    learning_start     = 200
+    learning_start     = 0 # 200
 
 
     # optimizer

@@ -169,6 +169,7 @@ class QN(object):
             total_reward = 0
             state = self.env.reset()
             while True:
+                # print('state at {}: {}'.format(t, state))
                 t += 1
                 last_eval += 1
                 last_record += 1
@@ -183,7 +184,8 @@ class QN(object):
                 # chose action according to current Q and exploration
                 best_action, q_values_tmp = self.get_best_action(q_input)
                 action                = exp_schedule.get_action(best_action)
-
+                
+                print(action, q_values_tmp)
                 # store q values                
                 max_q_values.append(max(q_values_tmp))
                 q_values += list(q_values_tmp)
