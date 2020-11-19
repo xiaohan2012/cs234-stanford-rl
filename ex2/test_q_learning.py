@@ -48,7 +48,12 @@ class Linear(nn.Module):
 
 
 class LinearQN(QN):
+    def process_state(self, state):
+        return state / self.config.high
+
     def get_best_action(self, state):
+        state = self.process_state(state)
+
         state = to_tensor([state], np.float32)
         q_values = self.q_network(state)
         _, idx = torch.max(q_values, dim=1)
@@ -108,33 +113,26 @@ class LinearQN(QN):
         state, action, reward, next_state, done = replay_buffer.sample(self.config.batch_size)
 
         # conversion to torch.Tensor
-        state = to_tensor(state, np.float32)
+        state = to_tensor(self.process_state(state), np.float32)   # normalize the data
         action = to_tensor(action, np.int)
         reward = to_tensor(reward, np.float32)
-        next_state = to_tensor(next_state, np.float32)
+        next_state = to_tensor(self.process_state(next_state), np.float32)
         done = to_tensor(done, np.bool)
 
-        # print('\nstate:', state)
-        print('\n reward:', reward)
         # get target q and q values
         target_q_values = self.get_target_q_value(reward, next_state, done)
+        
         q_values = self.get_q_value(state, action)
-        print('target_q_values:', target_q_values.detach().numpy())
-        print('q_values:', q_values.detach().numpy())
         # get loss
         loss = self.loss_func(q_values, target_q_values)
 
-        print('loss:', loss.item())
-
         # do gradient update
         loss.backward()
-
-        print('W.grad', self.q_network.fc.weight.grad)
+        # print('W.grad', self.q_network.fc.weight.grad)
         if self.config.grad_clip:
             torch.nn.utils.clip_grad_norm_(self.q_network.parameters(), self.config.clip_val)
-
         self.optimizer.step()
-
+        # print('W', self.q_network.fc.weight.detach().numpy())
         gnorm = grad_norm(self.q_network)
 
         return loss, gnorm
